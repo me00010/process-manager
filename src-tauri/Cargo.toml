@@ -1,0 +1,23 @@
+[package]
+name = "process-manager"
+version = "0.1.0"
+description = "按端口或名称搜索并结束 Windows 进程的小工具"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "process_manager_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sysinfo = "0.30"
+
+[profile.release]
+strip = true
+lto = true

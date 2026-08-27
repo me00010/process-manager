@@ -91,7 +91,10 @@
 *.test
 **/target/
 **/go.work
-**/Cargo.lock
+!**/Cargo.lock
+**/src-tauri/gen/
+**/src-tauri/icons/android/
+**/src-tauri/icons/ios/
 
 # Ruby
 *.gem
