@@ -5,13 +5,13 @@ use serde_json::Value;
 pub fn get_port_map() -> HashMap<u32, Vec<u16>> {
     #[cfg(target_os = "windows")]
     {
+        let script = r#"
+$tcp = Get-NetTCPConnection -State Listen | Select-Object LocalPort,OwningProcess
+$udp = Get-NetUDPEndpoint | Select-Object LocalPort,OwningProcess
+@($tcp + $udp) | Where-Object { $_.LocalPort -ne $null } | ConvertTo-Json -Compress
+"#;
         let mut map = HashMap::new();
-        let tcp_script = "Get-NetTCPConnection -State Listen | Select-Object LocalPort,OwningProcess | ConvertTo-Json -Compress";
-        let udp_script = "Get-NetUDPEndpoint | Select-Object LocalPort,OwningProcess | ConvertTo-Json -Compress";
-        if let Some(json) = run_powershell(tcp_script) {
-            parse_pairs(&json, &mut map);
-        }
-        if let Some(json) = run_powershell(udp_script) {
+        if let Some(json) = run_powershell(script) {
             parse_pairs(&json, &mut map);
         }
         map
@@ -24,8 +24,11 @@ pub fn get_port_map() -> HashMap<u32, Vec<u16>> {
 
 #[cfg(target_os = "windows")]
 fn run_powershell(script: &str) -> Option<Value> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     let out = std::process::Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", script])
+        .args(["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", script])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .ok()?;
     if !out.status.success() {
@@ -35,6 +38,7 @@ fn run_powershell(script: &str) -> Option<Value> {
     serde_json::from_str(text.trim()).ok()
 }
 
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 fn parse_pairs(value: &Value, map: &mut HashMap<u32, Vec<u16>>) {
     match value {
         Value::Array(items) => {
@@ -47,6 +51,7 @@ fn parse_pairs(value: &Value, map: &mut HashMap<u32, Vec<u16>>) {
     }
 }
 
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 fn add_pair(item: &Value, map: &mut HashMap<u32, Vec<u16>>) {
     let port = item
         .get("LocalPort")

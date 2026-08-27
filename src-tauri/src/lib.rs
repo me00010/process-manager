@@ -13,6 +13,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(AppState {
             sys: Mutex::new(sysinfo::System::new_all()),
+            port_cache: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
             commands::list_processes,
