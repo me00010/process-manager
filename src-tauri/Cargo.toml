@@ -1,6 +1,6 @@
 [package]
 name = "process-manager"
-version = "0.1.0"
+version = "0.1.2"
 description = "按端口或名称搜索并结束 Windows 进程的小工具"
 authors = ["you"]
 edition = "2021"
